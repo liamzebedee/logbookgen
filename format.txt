@@ -1,0 +1,51 @@
+Vars:
+
+	rego num
+	odometer
+
+things:
+
+	date = date()
+
+	from = 'place'
+	to = 'place'
+	distance = distance(from, to)
+	odometer_start = odometer
+	odometer += distance
+	odometer_end = odometer
+
+	start_time = datetime()
+	end_time = datetime()
+	total_mins = diff(start_time, end_time)
+
+
+
+input: 
+	from suburb
+	to suburb
+	some date
+	return(?)
+
+
+
+
+date
+rego number
+from suburb
+from number of odometer
+to subrub
+to number of odometer
+
+supervisor name
+supervisor driver license #
+license state/territory
+signature
+
+start time
+finish time
+total mins
+daytime
+nightime
+
+
+
