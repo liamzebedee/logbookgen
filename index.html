@@ -7,22 +7,22 @@
     	function testGmaps() {
     		window.directionsService = new google.maps.DirectionsService();
 
-  var request = {
-        origin: 'Glebe NSW',
-        destination: 'Ultimo NSW',
-        travelMode: google.maps.TravelMode.DRIVING,
-        // unitSystem: 'km',
-        region: 'au'
-};
+          var request = {
+            origin: 'Glebe NSW',
+            destination: 'Ultimo NSW',
+            travelMode: google.maps.TravelMode.DRIVING,
+            // unitSystem: 'km',
+            region: 'au'
+          };
 
-directionsService.route(request, function (response, status) {
-    if (status == google.maps.DirectionsStatus.OK) {
-      console.log(response)
-    } else {
-        console.log("directionsService : " + status);
-    }
-});
-}
+          directionsService.route(request, function (response, status) {
+              if (status == google.maps.DirectionsStatus.OK) {
+                console.log(response)
+              } else {
+                  console.log("directionsService : " + status);
+              }
+          });
+        }
     </script>
     <script async defer
       src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD2zdFUHYB3wWFNJ7BWT0pHDKppP4Bk6tE&callback=window.testGmaps">

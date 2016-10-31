@@ -56,7 +56,7 @@ class SwagDog extends Component {
   _addResult(res) {
     this.setState({ 
       results: this.state.results.concat([res]), 
-      odometer: res.odometerEnd, 
+      odometer: res.odometerEnd.toFixed(0), 
       entryTime: res.endTime
     })
   }
@@ -76,7 +76,7 @@ class SwagDog extends Component {
           let distance = leg.distance.value / 1000; // 1km
           let duration = leg.duration.value / 60; // gives it in minutes
 
-          let odometerStart = this.state.odometer;
+          let odometerStart = +this.state.odometer;
           let odometerEnd = odometerStart + distance;
 
           let startTime = this.state.entryTime;
@@ -127,48 +127,72 @@ class SwagDog extends Component {
 
   exportJson() {
     console.log(JSON.stringify(this.state.results))
+    // <input type="checkbox" checked={this.state.moveToNextDay} onChange={(val) => console.log(val)}/>
   }
 
   render() {
     let totalHours = this.state.results.length > 1 ? this.state.results.reduce((total, res) => total + res.hours, this.state.results[0].hours) : 0;
+    totalHours = totalHours.toFixed(2);
     
     let entryDateFmttd = this.state.entryDate.format(DATEFORMAT);
     let entryTimeFmttd = this.state.entryTime.format(TIMEFORMAT)
 
     return (
       <div>
-        <h3>Total hours: {totalHours}</h3>
-        <button onClick={this.exportJson}>Export JSON</button>
-          <input type="number" placeholder="Odometer start" value={this.state.odometer} onChange={(ev) => this.setState({ odometer: ev.target.value })}/>
-          <p>Odometer: {this.state.odometer}</p>
 
-
-        <div>
-          <input type="text" placeholder="From suburb" value={this.state.fromSub} onChange={(ev) => this.setState({ fromSub: ev.target.value })} defaultValue={"Newtown"}/>
-          <input type="text" value={this.state.toSub} placeholder="To suburb" onChange={(ev) => this.setState({ toSub: ev.target.value })} defaultValue={"Chippendale"}/>
-
-          <input type="date" value={entryDateFmttd} onChange={(ev) => this.setState({ entryDate: moment(ev.target.value, DATEFORMAT) })}/>
-          <input type="time" value={entryTimeFmttd} onChange={(ev) => this.setState({ entryTime: moment(ev.target.value, TIMEFORMAT) })}/>
-          
-          <input type="checkbox" checked={this.state.moveToNextDay} onChange={(val) => console.log(val)}/>
-
-          <button onClick={this.addEntry}>Add</button>
-          <button onClick={this.advance2to5Days}>Advance 2-5 days</button>
-          <button onClick={this.advance7to20Days}>Advance 7-20 days</button>
-          <button onClick={this.returnJourney}>Make return journey</button>
-
+        <div className  ="ui inverted fixed menu">
+          <a className="active item">
+            Logbook Faker
+          </a>
+          <a className="item">
+            {totalHours}&nbsp;HRS
+          </a>
+          <div className='item'>
+            <div className="ui inverted transparent icon input">
+             <input style={{textAlign: 'right', width: 120}}  type="number" placeholder="Odometer start" value={this.state.odometer} onChange={(ev) => this.setState({ odometer: ev.target.value })}/>KM
+              <i className="number icon"></i>
+            </div>
+          </div>
         </div>
 
-        <h2>Results</h2>
+        <div className='ui container' style={{ marginTop: '44px', padding: "1em 0em" }}>
 
-        <table className="ui celled table">
-          <thead>
-            <tr>{LOGBOOK_HEADERS.map((header, i) => <th key={i}>{header}</th>)}
-          </tr></thead>
-          <tbody>
-            {this.state.results.map((res, i) => <LogbookEntry key={i} {...res}/>)}
-          </tbody>
-        </table>
+            <div className="ui segment form">
+              <h3 className='title'>Create new entry</h3>
+              <div className='four fields'>
+                <input type="text" placeholder="From suburb" value={this.state.fromSub} onChange={(ev) => this.setState({ fromSub: ev.target.value })} defaultValue={"Newtown"}/>
+                <input type="text" value={this.state.toSub} placeholder="To suburb" onChange={(ev) => this.setState({ toSub: ev.target.value })} defaultValue={"Chippendale"}/>
+                <input type="time" value={entryTimeFmttd} onChange={(ev) => this.setState({ entryTime: moment(ev.target.value, TIMEFORMAT) })}/>
+                <input type="date" value={entryDateFmttd} onChange={(ev) => this.setState({ entryDate: moment(ev.target.value, DATEFORMAT) })}/>
+              </div>
+              <div className='ui basic buttons'>
+              <button className='ui green basic button' onClick={this.addEntry}><i className='ui add icon'></i> Add</button>
+              <button className='ui basic button' onClick={this.advance2to5Days}>Advance 2-5 days</button>
+              <button className='ui basic button' onClick={this.advance7to20Days}>Advance 7-20 days</button>
+              <button className='ui basic button' onClick={this.returnJourney}>Make return journey</button>
+            </div>
+            </div>
+
+
+
+            
+
+            
+
+          <h2><i className='ui list icon'></i> Entries</h2>
+          <table className="ui celled table">
+            <thead>
+              <tr>{LOGBOOK_HEADERS.map((header, i) => <th key={i}>{header}</th>)}
+            </tr></thead>
+            <tbody>
+              {this.state.results.map((res, i) => <LogbookEntry key={i} {...res}/>)}
+            </tbody>
+          </table>
+
+          <button onClick={this.exportJson}>Export JSON</button>
+        </div>
+
+
       </div>
     );
   }
