@@ -1,6 +1,7 @@
 <!doctype html>
 <html>
   <head>
+    <meta charset="utf-8">
     <title>Logbook faker</title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
     <script>
@@ -17,7 +18,7 @@
 
           directionsService.route(request, function (response, status) {
               if (status == google.maps.DirectionsStatus.OK) {
-                console.log(response)
+                console.log("GMAPS", response)
               } else {
                   console.log("directionsService : " + status);
               }
@@ -31,6 +32,6 @@
   </head>
   <body>
     <div id="root"></div>
-    <script src="/dist/bundle.js"></script>
+    <script src="dist/bundle.js"></script>
   </body>
 </html>
