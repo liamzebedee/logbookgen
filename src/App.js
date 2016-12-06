@@ -1,5 +1,26 @@
 import React, { Component } from 'react';
 import moment from 'moment';
+function roundMinutes(momentObj) {
+  var rounded = roundMinutesPure(momentObj.minute());
+  let x = momentObj.minute(rounded).second(0)
+  return x
+}
+
+function roundMinutesPure(mins) {
+  // return mins;
+  return Math.ceil(mins / 15) * 15;
+}
+
+
+function saveData(data) {
+  localStorage.setItem("data", JSON.stringify(data))
+}
+function loadData() {
+  return JSON.parse(localStorage.getItem("data") || "{}");
+}
+
+
+
 
 const GMAPS_KEY = "AIzaSyD2zdFUHYB3wWFNJ7BWT0pHDKppP4Bk6tE";
 
@@ -49,16 +70,35 @@ class SwagDog extends Component {
     this.addEntry = this.addEntry.bind(this)
     this.exportJson = this.exportJson.bind(this)
     this.advance2to5Days = this.advance2to5Days.bind(this)
+    this.advanceTomorrow = this.advanceTomorrow.bind(this)
     this.advance7to20Days = this.advance7to20Days.bind(this)
     this.returnJourney = this.returnJourney.bind(this)
+    this.loadFromJson = this.loadFromJson.bind(this)
+  }
+
+  componentDidMount() {
+    let data = loadData();
+    if(data === {}) return;
+    this.setState(Object.assign(data, {
+      // Do a heap of moment unpacking etc.
+      entryDate: moment(data.entryDate),
+      entryTime: moment(data.entryTime),
+      results: data.results.map(result => {
+        result.startTime = moment(result.startTime);
+        result.endTime = moment(result.endTime);
+        return result;
+      })
+
+    }))
   }
 
   _addResult(res) {
     this.setState({ 
       results: this.state.results.concat([res]), 
       odometer: res.odometerEnd.toFixed(0), 
-      entryTime: res.endTime
+      entryTime: res.endTime,
     })
+    saveData(this.state)
   }
 
   addEntry() {
@@ -74,13 +114,13 @@ class SwagDog extends Component {
           let leg = response.routes[0].legs[0];
 
           let distance = leg.distance.value / 1000; // 1km
-          let duration = leg.duration.value / 60; // gives it in minutes
+          let duration = roundMinutesPure(leg.duration.value / 60); // gives it in minutes
 
           let odometerStart = +this.state.odometer;
           let odometerEnd = odometerStart + distance;
 
-          let startTime = this.state.entryTime;
-          let endTime = moment(this.state.entryTime).add(duration, 'minutes');
+          let startTime = roundMinutes(this.state.entryTime.clone());
+          let endTime = roundMinutes(moment(this.state.entryTime).add(duration, 'minutes'));
 
 
           let entry = {
@@ -93,6 +133,7 @@ class SwagDog extends Component {
             duration,
             odometerStart,
             odometerEnd,
+            startTime,
             endTime,
 
             hours: duration / 60,
@@ -104,6 +145,12 @@ class SwagDog extends Component {
             throw new Error("directionsService faaaailed: " + status);
         }
     });
+  }
+
+  advanceTomorrow() {
+    let x = moment(this.state.entryDate)
+    x.add(1, 'days')
+    this.setState({ entryDate: x })
   }
 
   advance2to5Days() {
@@ -125,9 +172,19 @@ class SwagDog extends Component {
     })
   }
 
+  resetData() {
+    saveData({})
+    location.reload()
+  }
+
   exportJson() {
-    console.log(JSON.stringify(this.state.results))
-    // <input type="checkbox" checked={this.state.moveToNextDay} onChange={(val) => console.log(val)}/>
+    let str = JSON.stringify(this.state.results)
+    prompt("Copy and paste your JSON string for more fun!", str);
+  }
+
+  loadFromJson(jsonString) {
+    let jsonStr = prompt("Enter previous JSON");
+    this.setState({ results: JSON.parse(jsonStr) });
   }
 
   render() {
@@ -135,7 +192,7 @@ class SwagDog extends Component {
     totalHours = totalHours.toFixed(2);
     
     let entryDateFmttd = this.state.entryDate.format(DATEFORMAT);
-    let entryTimeFmttd = this.state.entryTime.format(TIMEFORMAT)
+    let entryTimeFmttd = this.state.entryTime.format(TIMEFORMAT);
 
     return (
       <div>
@@ -153,6 +210,8 @@ class SwagDog extends Component {
               <i className="number icon"></i>
             </div>
           </div>
+
+
         </div>
 
         <div className='ui container' style={{ marginTop: '44px', padding: "1em 0em" }}>
@@ -167,6 +226,7 @@ class SwagDog extends Component {
               </div>
               <div className='ui basic buttons'>
               <button className='ui green basic button' onClick={this.addEntry}><i className='ui add icon'></i> Add</button>
+              <button className='ui basic button' onClick={this.advanceTomorrow}>Advance to tomorrow</button>
               <button className='ui basic button' onClick={this.advance2to5Days}>Advance 2-5 days</button>
               <button className='ui basic button' onClick={this.advance7to20Days}>Advance 7-20 days</button>
               <button className='ui basic button' onClick={this.returnJourney}>Make return journey</button>
@@ -189,7 +249,9 @@ class SwagDog extends Component {
             </tbody>
           </table>
 
-          <button onClick={this.exportJson}>Export JSON</button>
+          <button className='ui assertive button' onClick={this.resetData}>Reset</button>
+          <button className='ui item button' onClick={this.exportJson}>Export JSON</button>
+          <button className='ui item button' onClick={this.loadFromJson}>Load from JSON</button>
         </div>
 
 
@@ -198,9 +260,26 @@ class SwagDog extends Component {
   }
 }
 
+
+// Returns fractional value of hours between two times
+function getHoursBetween(startBoundary, endBoundary, startHour, endHour) {
+  let maxStart = Math.max(startHour, startBoundary)
+  let maxEnd = Math.min(endHour, endBoundary)
+  return Math.max(maxEnd - maxStart, 0);
+}
+
+const getDayHours = (startHour, endHour) => getHoursBetween(6, 19, startHour, endHour)
+
+
 class LogbookEntry extends Component {
   render() {
-    let json = JSON.stringify(this.props, null, 1)
+    let json = JSON.stringify(this.props, null, 1);
+
+    let startHour = this.props.startTime.get('hour') + (this.props.startTime.get('minute') / 60);
+    let endHour = this.props.endTime.get('hour') + (this.props.endTime.get('minute') / 60);
+    
+    let dayMins = Math.round(getDayHours(startHour, endHour) * 60)
+    let nightMins = this.props.duration - dayMins;
 
     return <tr>
       <td>{moment(this.props.date).format(DATEFORMAT)}</td>
@@ -211,8 +290,8 @@ class LogbookEntry extends Component {
       <td>{moment(this.props.startTime).format(TIMEFORMAT)}</td>
       <td>{moment(this.props.endTime).format(TIMEFORMAT)}</td>
       <td>{Math.round(this.props.duration, 1)}</td>
-      <td>{Math.round(this.props.duration, 1)}</td>
-      <td>{Math.round(this.props.duration, 1)}</td>
+      <td>{dayMins}</td>
+      <td>{nightMins}</td>
     </tr>
   }
 }
