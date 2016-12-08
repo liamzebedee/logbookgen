@@ -74,10 +74,10 @@ class SwagDog extends Component {
     this.advance7to20Days = this.advance7to20Days.bind(this)
     this.returnJourney = this.returnJourney.bind(this)
     this.loadFromJson = this.loadFromJson.bind(this)
+    this.loadPreviousSavedState = this.loadPreviousSavedState.bind(this)
   }
 
-  componentDidMount() {
-    let data = loadData();
+  loadPreviousSavedState(data) {
     if(data === {}) return;
     this.setState(Object.assign(data, {
       // Do a heap of moment unpacking etc.
@@ -88,8 +88,12 @@ class SwagDog extends Component {
         result.endTime = moment(result.endTime);
         return result;
       })
-
     }))
+  }
+
+  componentDidMount() {
+    let data = loadData();
+    this.loadPreviousSavedState(data)
   }
 
   _addResult(res) {
@@ -178,17 +182,18 @@ class SwagDog extends Component {
   }
 
   exportJson() {
-    let str = JSON.stringify(this.state.results)
+    let str = JSON.stringify(this.state)
     prompt("Copy and paste your JSON string for more fun!", str);
   }
 
   loadFromJson(jsonString) {
     let jsonStr = prompt("Enter previous JSON");
-    this.setState({ results: JSON.parse(jsonStr) });
+    this.loadPreviousSavedState(JSON.parse(jsonStr));
+    saveData(this.state)
   }
 
   render() {
-    let totalHours = this.state.results.length > 1 ? this.state.results.reduce((total, res) => total + res.hours, this.state.results[0].hours) : 0;
+    let totalHours = this.state.results.length > 1 ? this.state.results.reduce((total, res) => total + res.hours, 0) : 0;
     totalHours = totalHours.toFixed(2);
     
     let entryDateFmttd = this.state.entryDate.format(DATEFORMAT);
@@ -286,7 +291,7 @@ class LogbookEntry extends Component {
       <td>{this.props.fromSub}</td>
       <td>{this.props.odometerStart}</td>
       <td>{this.props.toSub}</td>
-      <td>{this.props.odometerEnd}</td>
+      <td>{Math.round(this.props.odometerEnd)}</td>
       <td>{moment(this.props.startTime).format(TIMEFORMAT)}</td>
       <td>{moment(this.props.endTime).format(TIMEFORMAT)}</td>
       <td>{Math.round(this.props.duration, 1)}</td>
